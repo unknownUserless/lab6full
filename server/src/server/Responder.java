@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-public class Responder extends Thread {
+public class Responder implements Runnable {
     private Command command;
 
     public Responder(Command command) {

@@ -152,7 +152,7 @@ public class Main {
             int id = ((User) key.attachment()).getId();
             System.out.println("Пользователь " + id + " вышел");
         } else {
-            new Responder(command).start();
+            new Thread(new Responder(command)).start();
         }
     }
 }
