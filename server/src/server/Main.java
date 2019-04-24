@@ -33,13 +33,13 @@ public class Main {
         handler.setLevel(Level.OFF);
 
         int mainPort = -1;
-        if (args.length < 1){
+        if (args.length < 1) {
             System.out.println("Неверное число аргументов, 1 - порт,  2 - уровень логгера");
             System.exit(2);
         } else if (args.length < 3) {
             try {
                 mainPort = Integer.parseInt(args[0]);
-            } catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 System.err.println("Первый аргумент должен быть числом [1500; 40000]");
                 System.exit(2);
             }
@@ -58,9 +58,9 @@ public class Main {
             System.exit(1);
         }
 
-        try{
+        try {
             users.load();
-        } catch (Throwable e){
+        } catch (Throwable e) {
             users.clearFile();
             users.load();
         }
@@ -85,10 +85,14 @@ public class Main {
             while (iter.hasNext()) {
                 SelectionKey key = iter.next();
                 iter.remove();
-                if (key.attachment() == null) {
-                    handleMainKey(key);
-                } else {
-                    handleUserKey(key);
+                try {
+                    if (key.attachment() == null) {
+                        handleMainKey(key);
+                    } else {
+                        handleUserKey(key);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -100,13 +104,13 @@ public class Main {
         if (mainConnector == null) {
             mainConnector = new Connector(key);
         }
-        MainPacket receivedPacket = (MainPacket)mainConnector.receiver.receiveObj();
+        MainPacket receivedPacket = (MainPacket) mainConnector.receiver.receiveObj();
         mainConnector.setSendAddress(receivedPacket.address);
 
         User user;
 
         logger.info("В данный момент подключены: " + currentConnections.keySet().stream().map(String::valueOf).
-                        collect(Collectors.joining(", ")));
+                collect(Collectors.joining(", ")));
         logger.info("Запрос на соединение от пользователя " + receivedPacket.id);
 
         if (currentConnections.containsKey(receivedPacket.id)) {
@@ -139,15 +143,15 @@ public class Main {
     }
 
 
-
     private static void handleUserKey(SelectionKey key) throws IOException, ClassNotFoundException {
         Connector connector = new Connector(key);
-        MyPacket packet = (MyPacket)connector.receiver.receiveObj();
+        MyPacket packet = (MyPacket) connector.receiver.receiveObj();
         logger.fine("command = " + packet.getCommand());
         logger.fine("arguments = " + packet.getArguments());
         logger.fine("attachment = " + packet.getAttachment());
-        Command command = new Command((User)key.attachment(), packet, connector);
+        Command command = new Command((User) key.attachment(), packet, connector);
         if (command.isExit()) {
+            key.channel().close();
             key.cancel();
             int id = ((User) key.attachment()).getId();
             System.out.println("Пользователь " + id + " вышел");
